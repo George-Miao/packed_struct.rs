@@ -201,7 +201,7 @@ macro_rules! integer_as_bytes {
                 let n = self.swap_bytes();
                 as_bytes!($N, n)
             }
-            
+
             #[inline]
             fn from_msb_bytes(bytes: &[u8; $N]) -> Self {
                 from_bytes!($N, bytes, $T)
@@ -342,7 +342,7 @@ macro_rules! integer_bytes_impl {
 
         impl Deref for Integer<$T, $TB> {
             type Target = $T;
-            
+
             fn deref(&self) -> &$T {
                 &self.num
             }
@@ -479,7 +479,7 @@ bytes8_impl!(u64, unsigned);
 bytes8_impl!(i64, signed);
 
 /// A positive bit mask of the desired width.
-/// 
+///
 /// ones(1) => 0b1
 /// ones(2) => 0b11
 /// ones(3) => 0b111
@@ -560,7 +560,7 @@ fn test_roundtrip_u20() {
     let msb_bytes = num.to_msb_bytes().unwrap();
     assert_eq!([0x0F, 0xBB, 0xAA], msb_bytes);
     let from_msb = <Integer<u32, Bits::<20>>>::from_msb_bytes(&msb_bytes).unwrap();
-    assert_eq!(val, *from_msb);    
+    assert_eq!(val, *from_msb);
 }
 
 
@@ -660,46 +660,48 @@ impl<T, B, I> PackedStruct for LsbInteger<T, B, I>
 
     fn pack(&self) -> PackingResult<<<B as NumberOfBits>::Bytes as NumberOfBytes>::AsBytes> {
         let mut bytes = self.0.to_lsb_bytes()?;
-        
+
         let l = B::byte_array_len() * 8;
         let shift_by_bits = l - B::number_of_bits();
         if shift_by_bits > 0 && (shift_by_bits % 8) != 0 {
-            use bitvec::prelude::*;
+            // use bitvec::prelude::*;
 
-            let leftover_bits = B::number_of_bits() % 8;            
-            
-            let bytes_slice = bytes.as_mut_bytes_slice();
-            let bits = BitSlice::<_, Msb0>::try_from_slice_mut(bytes_slice).map_err(|_| PackingError::BitsError)?;
-            let s = l - B::number_of_bits();
-            let (left, _) = bits.split_at_mut(l - leftover_bits);
-            left.shift_right(s);
+            // let leftover_bits = B::number_of_bits() % 8;
+
+            // let bytes_slice = bytes.as_mut_bytes_slice();
+            // let bits = BitSlice::<_, Msb0>::try_from_slice_mut(bytes_slice).map_err(|_| PackingError::BitsError)?;
+            // let s = l - B::number_of_bits();
+            // let (left, _) = bits.split_at_mut(l - leftover_bits);
+            // left.shift_right(s);
+            panic!("Bitvec is removed");
         }
-        
+
         Ok(bytes)
     }
 
     #[inline]
-    fn unpack(src: &<<B as NumberOfBits>::Bytes as NumberOfBytes>::AsBytes) -> PackingResult<Self> {        
+    fn unpack(src: &<<B as NumberOfBits>::Bytes as NumberOfBytes>::AsBytes) -> PackingResult<Self> {
         let l = B::byte_array_len() * 8;
         let shift_by_bits = l - B::number_of_bits();
 
         let n = if shift_by_bits > 0 && (shift_by_bits % 8) != 0 {
-            use bitvec::prelude::*;
+            // use bitvec::prelude::*;
 
-            let leftover_bits = B::number_of_bits() % 8;
+            // let leftover_bits = B::number_of_bits() % 8;
 
-            let mut src_bytes = (*src).clone();
-            let bytes_slice = src_bytes.as_mut_bytes_slice();
-            let bits = BitSlice::<_, Msb0>::try_from_slice_mut(bytes_slice).map_err(|_| PackingError::BitsError)?;
-            let s = l - B::number_of_bits();
-            let (left, _) = bits.split_at_mut(l - leftover_bits);
-            left.shift_left(s);
+            // let mut src_bytes = (*src).clone();
+            // let bytes_slice = src_bytes.as_mut_bytes_slice();
+            // let bits = BitSlice::<_, Msb0>::try_from_slice_mut(bytes_slice).map_err(|_| PackingError::BitsError)?;
+            // let s = l - B::number_of_bits();
+            // let (left, _) = bits.split_at_mut(l - leftover_bits);
+            // left.shift_left(s);
 
-            I::from_lsb_bytes(&src_bytes)?
+            // I::from_lsb_bytes(&src_bytes)?
+            panic!("Bitvec is removed");
         } else {
             I::from_lsb_bytes(src)?
         };
-        
+
         let n = LsbInteger(n, Default::default(), Default::default());
         Ok(n)
     }
@@ -720,7 +722,7 @@ fn test_packed_int_msb() {
     let endian = typed.as_packed_msb();
     let packed = endian.pack().unwrap();
     assert_eq!([0xAA, 0xBB, 0xCC, 0xDD], packed);
-    
+
     let unpacked: MsbInteger<_, _, Integer<u32, Bits::<32>>> = MsbInteger::unpack(&packed).unwrap();
     assert_eq!(val, **unpacked);
 }
@@ -732,7 +734,7 @@ fn test_packed_int_partial() {
     let endian = typed.as_packed_msb();
     let packed = endian.pack().unwrap();
     assert_eq!([0b00000010, 0b10101010], packed);
-    
+
     let unpacked: MsbInteger<_, _, Integer<u16, Bits::<10>>> = MsbInteger::unpack(&packed).unwrap();
     assert_eq!(val, **unpacked);
 }
@@ -744,7 +746,7 @@ fn test_packed_int_lsb() {
     let endian = typed.as_packed_lsb();
     let packed = endian.pack().unwrap();
     assert_eq!([0xDD, 0xCC, 0xBB, 0xAA], packed);
-    
+
     let unpacked: LsbInteger<_, _, Integer<u32, Bits::<32>>> = LsbInteger::unpack(&packed).unwrap();
     assert_eq!(val, **unpacked);
 }
@@ -756,7 +758,7 @@ fn test_packed_int_lsb_partial_b10() {
     let endian = typed.as_packed_lsb();
     let packed = endian.pack().unwrap();
     assert_eq!([0b00000010, 0b10101110], packed);
-    
+
     let unpacked: LsbInteger<_, _, Integer<u16, Bits::<10>>> = LsbInteger::unpack(&packed).unwrap();
     assert_eq!(val, **unpacked);
 }
@@ -794,7 +796,7 @@ fn test_packed_int_lsb_sub() {
 #[test]
 fn test_big_slice_unpacking() {
     use crate::packing::PackedStructSlice;
-    
+
     let data = vec![0xAA, 0xBB, 0xCC, 0xDD];
     let unpacked = <MsbInteger<_, _, Integer<u32, Bits::<32>>>>::unpack_from_slice(&data).unwrap();
     assert_eq!(0xAABBCCDD, **unpacked);
